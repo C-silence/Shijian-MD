@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 短标题条 + 三行正文：与应用内 H1 短条、正文行的版式同源 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M42.79,31.58h22.42a2.95,2.95 0 0 1 0,5.9h-22.42a2.95,2.95 0 0 1 0,-5.9z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M33.35,46.92h41.3a2.95,2.95 0 0 1 0,5.9h-41.3a2.95,2.95 0 0 1 0,-5.9z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M33.35,58.72h41.3a2.95,2.95 0 0 1 0,5.9h-41.3a2.95,2.95 0 0 1 0,-5.9z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M33.35,70.52h24.78a2.95,2.95 0 0 1 0,5.9h-24.78a2.95,2.95 0 0 1 0,-5.9z" />
+</vector>
