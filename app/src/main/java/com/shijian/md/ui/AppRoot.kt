@@ -22,6 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.shijian.md.AppViewModel
 import com.shijian.md.ui.home.HomeScreen
+import com.shijian.md.ui.home.ImportConfirmDialog
+import com.shijian.md.ui.home.LibraryGuideScreen
+import com.shijian.md.ui.home.LibraryScreen
+import com.shijian.md.ui.home.TrashScreen
 import com.shijian.md.ui.settings.SettingsScreen
 import com.shijian.md.ui.theme.DarkMode
 import com.shijian.md.ui.theme.LocalMdTheme
@@ -59,6 +63,12 @@ fun AppRoot(vm: AppViewModel) {
     }
     val window = rememberWindowClass()
     var showSettings by remember { mutableStateOf(false) }
+    var showRecents by remember { mutableStateOf(false) }
+
+    // 打开库里的文档时自动退出「最近打开」，返回时落回它所在的目录
+    LaunchedEffect(vm.doc?.uri) {
+        if (vm.doc?.libraryDoc == true) showRecents = false
+    }
 
     ShijianTheme(spec) {
         val view = LocalView.current
@@ -76,14 +86,32 @@ fun AppRoot(vm: AppViewModel) {
                     window = window,
                     onOpenSettings = { showSettings = true },
                 )
-                else -> HomeScreen(vm = vm, onOpenSettings = { showSettings = true })
+                !vm.library.hasLibrary -> LibraryGuideScreen(vm)
+                vm.inTrash -> TrashScreen(vm = vm, onBack = { vm.closeTrash() })
+                showRecents -> HomeScreen(
+                    vm = vm,
+                    onOpenSettings = { showSettings = true },
+                    onBack = { showRecents = false },
+                )
+                else -> LibraryScreen(
+                    vm = vm,
+                    onOpenSettings = { showSettings = true },
+                    onOpenRecents = { showRecents = true },
+                )
             }
+            // 首次导入的「问一次」，压在任何界面之上
+            ImportConfirmDialog(vm)
             ToastPill(vm)
         }
     }
 
-    BackHandler(enabled = showSettings || vm.doc != null) {
-        if (showSettings) showSettings = false else vm.closeDoc()
+    BackHandler(enabled = showSettings || showRecents || vm.doc != null || vm.inTrash) {
+        when {
+            showSettings -> showSettings = false
+            vm.inTrash -> vm.closeTrash()
+            showRecents -> showRecents = false
+            else -> vm.closeDoc()
+        }
     }
 }
 

@@ -14,6 +14,8 @@ data class RecentDoc(
     val title: String,
     val time: Long,
     val preview: String = "",
+    /** 上次读到的位置（0..1），首页「继续阅读」用它画进度条。 */
+    val progress: Float = 0f,
 )
 
 class RecentStore(context: Context) {
@@ -25,11 +27,20 @@ class RecentStore(context: Context) {
 
     val items: List<RecentDoc> get() = state
 
-    fun touch(uri: String, title: String, preview: String = "") {
+    fun touch(uri: String, title: String, preview: String = "", progress: Float = -1f) {
+        val kept = state.firstOrNull { it.uri == uri }?.progress ?: 0f
         val next = ArrayList<RecentDoc>(state.size + 1)
-        next += RecentDoc(uri, title, System.currentTimeMillis(), preview)
+        next += RecentDoc(uri, title, System.currentTimeMillis(), preview, if (progress < 0f) kept else progress)
         state.filterTo(next) { it.uri != uri }
         state = next.take(MAX_ITEMS)
+        persist()
+    }
+
+    /** 只更新阅读进度，不动排序——用户还在读，不该因此把它顶到最前面。 */
+    fun setProgress(uri: String, progress: Float) {
+        val current = state.firstOrNull { it.uri == uri } ?: return
+        if (kotlin.math.abs(current.progress - progress) < 0.01f) return
+        state = state.map { if (it.uri == uri) it.copy(progress = progress) else it }
         persist()
     }
 
@@ -52,6 +63,7 @@ class RecentStore(context: Context) {
                     .put("title", it.title)
                     .put("time", it.time)
                     .put("preview", it.preview)
+                    .put("progress", it.progress.toDouble())
             )
         }
         prefs.edit().putString(KEY, arr.toString()).apply()
@@ -69,6 +81,7 @@ class RecentStore(context: Context) {
                     title = o.optString("title", uri.substringAfterLast('/')),
                     time = o.optLong("time", 0L),
                     preview = o.optString("preview", ""),
+                    progress = o.optDouble("progress", 0.0).toFloat(),
                 )
             }
         }.getOrDefault(emptyList())

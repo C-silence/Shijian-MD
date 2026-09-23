@@ -38,17 +38,17 @@ class MainActivity : ComponentActivity() {
     private fun handleIntent(intent: Intent?) {
         when (intent?.action) {
             Intent.ACTION_VIEW -> intent.data?.let {
-                vm.open(it, edit = false, sourceFlags = intent.flags)
+                vm.openExternal(it, edit = false, sourceFlags = intent.flags)
             }
             Intent.ACTION_EDIT -> intent.data?.let {
-                vm.open(it, edit = true, sourceFlags = intent.flags)
+                vm.openExternal(it, edit = true, sourceFlags = intent.flags)
             }
             Intent.ACTION_SEND -> {
                 @Suppress("DEPRECATION")
                 val stream = intent.getParcelableExtra(Intent.EXTRA_STREAM) as? Uri
                 val text = intent.getStringExtra(Intent.EXTRA_TEXT)
                 when {
-                    stream != null -> vm.open(stream, sourceFlags = intent.flags)
+                    stream != null -> vm.openExternal(stream, sourceFlags = intent.flags)
                     !text.isNullOrBlank() -> vm.openText("分享的文本.md", text)
                 }
             }

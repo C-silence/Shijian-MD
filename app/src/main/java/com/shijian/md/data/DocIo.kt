@@ -26,11 +26,25 @@ object DocIo {
             f.writeBytes(text.toByteArray(Charsets.UTF_8))
             return
         }
-        context.contentResolver.openOutputStream(uri, "wt")?.use { out ->
-            out.write(text.toByteArray(Charsets.UTF_8))
-            out.flush()
-        } ?: throw IllegalStateException("无法写入该文档")
+        val bytes = text.toByteArray(Charsets.UTF_8)
+        var lastError: Throwable? = null
+        // "wt" 是唯一「截断 + 写」的模式；个别 provider 不认，就退到 rwt / w。
+        // 不能只试一次就放弃——库文件写不进去，等于用户的改动白做了。
+        for (mode in WRITE_MODES) {
+            val result = runCatching {
+                context.contentResolver.openOutputStream(uri, mode)?.use { out ->
+                    out.write(bytes)
+                    out.flush()
+                } ?: throw IllegalStateException("无法写入该文档")
+            }
+            if (result.isSuccess) return
+            lastError = result.exceptionOrNull()
+            if (lastError is SecurityException) break
+        }
+        throw lastError ?: IllegalStateException("无法写入该文档")
     }
+
+    private val WRITE_MODES = arrayOf("wt", "rwt", "w")
 
     fun displayName(context: Context, uri: Uri): String {
         if (uri.scheme == "file") return File(uri.path ?: "").name
@@ -134,12 +148,30 @@ object DocIo {
 
     /** 是否持有该 uri 的长期授权（任意模式）。用于判断最近列表里的条目是否还能打开。 */
     fun hasPersistedGrant(context: Context, uri: Uri): Boolean = runCatching {
-        context.contentResolver.persistedUriPermissions.any { it.uri == uri }
+        context.contentResolver.persistedUriPermissions.any { it.uri == uri || isUnder(uri, it.uri) }
     }.getOrDefault(false)
 
     private fun hasPersistedWrite(context: Context, uri: Uri): Boolean = runCatching {
-        context.contentResolver.persistedUriPermissions.any { it.uri == uri && it.isWritePermission }
+        context.contentResolver.persistedUriPermissions.any {
+            it.isWritePermission && (it.uri == uri || isUnder(uri, it.uri))
+        }
     }.getOrDefault(false)
+
+    /**
+     * [uri] 是否落在已授权的目录树 [tree] 里。
+     *
+     * 笔记库拿到的是一棵目录树的授权，库里的每个文件都是「树的后代」，而不是被单独授权过的
+     * Uri；只比对相等会把库里的文件全判成「没权限」，所以必须按文档 id 前缀判断。
+     */
+    fun isUnder(uri: Uri?, tree: Uri): Boolean {
+        if (uri == null || uri.scheme != "content") return false
+        return runCatching {
+            if (!DocumentsContract.isTreeUri(tree)) return@runCatching false
+            val root = DocumentsContract.getTreeDocumentId(tree)
+            val id = DocumentsContract.getDocumentId(uri)
+            root.isNotEmpty() && id.isNotEmpty() && (id == root || id.startsWith("$root/"))
+        }.getOrDefault(false)
+    }
 
     /**
      * 能否写回源文件。

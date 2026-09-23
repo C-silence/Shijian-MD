@@ -1,5 +1,7 @@
 package com.shijian.md.ui.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,6 +33,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -55,6 +58,11 @@ fun SettingsScreen(vm: AppViewModel, onBack: () -> Unit) {
     val c = spec.colors
     val settings = vm.settings
     val dark = spec.isDark
+    val library = vm.library
+
+    val treePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) vm.attachLibrary(uri)
+    }
 
     Column(Modifier.fillMaxSize()) {
         Row(
@@ -166,6 +174,71 @@ fun SettingsScreen(vm: AppViewModel, onBack: () -> Unit) {
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
+                SectionTitle("笔记库", spec, top = 14.dp)
+            }
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(c.surface)
+                        .border(1.dp, c.outline, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                ) {
+                    if (library.hasLibrary) {
+                        Text("当前库", style = spec.typography.caption, color = c.muted)
+                        Text(
+                            text = library.rootName,
+                            style = spec.typography.small,
+                            color = c.onBackground,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Text(
+                            text = prettyDocPath(library.rootDocId.orEmpty()),
+                            style = spec.typography.caption,
+                            color = c.muted,
+                        )
+                    } else {
+                        Text(
+                            text = "还没有设置笔记库",
+                            style = spec.typography.small,
+                            color = c.onBackground,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Text(
+                            text = "选一个文件夹后，从 QQ / 微信打开的 md 会自动收进「收件箱」。",
+                            style = spec.typography.caption,
+                            color = c.muted,
+                        )
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Row {
+                        TextButton(onClick = { treePicker.launch(null) }) {
+                            Text(
+                                text = if (library.hasLibrary) "更换文件夹" else "选择文件夹",
+                                style = spec.typography.label,
+                                color = c.primaryDeep,
+                            )
+                        }
+                        if (library.hasLibrary) {
+                            TextButton(onClick = {
+                                library.clear()
+                                vm.toast("已清除笔记库设置，库里的文件没有动过")
+                            }) {
+                                Text("清除设置", style = spec.typography.label, color = c.muted)
+                            }
+                        }
+                    }
+                    SwitchRow(
+                        title = "以后都导入到「收件箱」",
+                        desc = "关闭后，每次从外部打开 md 都会先问一次",
+                        checked = library.importConfirmed,
+                        spec = spec,
+                        onCheckedChange = { library.importConfirmed = it },
+                    )
+                }
+            }
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 SectionTitle("偏好", spec, top = 14.dp)
             }
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -213,9 +286,10 @@ fun SettingsScreen(vm: AppViewModel, onBack: () -> Unit) {
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Text("拾简 0.1", style = spec.typography.small, color = c.onBackground, fontWeight = FontWeight.Medium)
+                    Text("拾简 0.2", style = spec.typography.small, color = c.onBackground, fontWeight = FontWeight.Medium)
                     Text(
-                        "面向手机与平板的 Markdown 阅读器。所有文档都在本机处理，不需要联网。",
+                        "面向手机与平板的 Markdown 编辑器。笔记库就是一个普通文件夹（默认 Documents/拾简），" +
+                            "电脑连线、云盘同步都能看到同一批文件；所有内容都在本机处理，不联网。",
                         style = spec.typography.caption,
                         color = c.muted,
                     )
@@ -383,4 +457,13 @@ private fun SwitchRow(
             ),
         )
     }
+}
+
+/** `primary:Documents/拾简` → `内部存储/Documents/拾简`。 */
+private fun prettyDocPath(docId: String): String {
+    if (docId.isBlank()) return ""
+    val volume = docId.substringBefore(':')
+    val rest = docId.substringAfter(':', "")
+    val label = if (volume == "primary") "内部存储" else volume
+    return if (rest.isBlank()) label else "$label/$rest"
 }

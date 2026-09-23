@@ -128,6 +128,8 @@ private fun DocumentContent(
     val progress = if (parsed.blocks.isEmpty()) 100 else {
         ((listState.firstVisibleItemIndex + 1) * 100 / parsed.blocks.size).coerceIn(0, 100)
     }
+    // 首页「继续阅读」靠这个进度，关闭文档时由 ViewModel 写回最近列表
+    LaunchedEffect(progress) { doc.progress = progress }
     val imageBase = remember(doc.uri) {
         doc.uri?.takeIf { it.scheme == "file" }?.path?.let { File(it).parentFile }
     }
@@ -357,6 +359,10 @@ private fun DocTopBar(
                         append(" 字")
                         if (doc.readOnly) append(" · 只读")
                         if (doc.imported) append(" · 导入副本")
+                        doc.folderPath?.let { path ->
+                            append(" · ")
+                            append(path)
+                        }
                     },
                     style = spec.typography.caption,
                     color = c.muted,

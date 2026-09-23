@@ -184,4 +184,52 @@ object ShijianIcons {
             "M10.6 14.6 8 12l-1.4 1.4 4 4 7-7-1.4-1.4z",
         )
     }
+
+    /** 文档：库列表里的 .md 文件。 */
+    val Doc: ImageVector by lazy {
+        icon(
+            "doc",
+            "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z",
+        )
+    }
+
+    /** 新建文件夹：引导页大图标与后续的「新建文件夹」。 */
+    val FolderPlus: ImageVector by lazy {
+        icon(
+            "folderPlus",
+            "M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z",
+            "M13 10.5h-2v2.5H8.5v2H11v2.5h2V15h2.5v-2H13v-2.5z",
+        )
+    }
+
+    val ChevronRight: ImageVector by lazy {
+        icon("chevronRight", "M9.4 6.4 8 7.8l4.2 4.2L8 16.2l1.4 1.4 5.6-5.6z")
+    }
+
+    /** 移动：文件夹轮廓 + 指进去的箭头（文件夹内部是挖空的，箭头才看得见）。 */
+    val MoveTo: ImageVector by lazy {
+        icon(
+            "moveTo",
+            "M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2zm10 16H4V8h16v12z",
+            "M6 16V8h14v8z",
+            "M9 11h5V9.6L17.4 12 14 14.4V13H9z",
+        )
+    }
+
+    /** 还原：回收站把文件搬回原处。 */
+    val Restore: ImageVector by lazy {
+        icon(
+            "restore",
+            "M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z",
+        )
+    }
+
+    /** 导出：把库里的笔记另存一份到别处。 */
+    val Export: ImageVector by lazy {
+        icon(
+            "export",
+            "M9 16h6v-6h4l-7-7-7 7h4z",
+            "M5 18h14v2H5z",
+        )
+    }
 }

@@ -39,12 +39,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.shijian.md.AppViewModel
 import com.shijian.md.data.RecentDoc
+import com.shijian.md.ui.components.AppMark
 import com.shijian.md.ui.components.ShijianIcons
 import com.shijian.md.ui.theme.LocalMdTheme
 import com.shijian.md.ui.theme.ThemeSpec
 
+/** 「最近打开」：跨文件夹的时间线视图，作为笔记库的补充入口。 */
 @Composable
-fun HomeScreen(vm: AppViewModel, onOpenSettings: () -> Unit) {
+fun HomeScreen(vm: AppViewModel, onOpenSettings: () -> Unit, onBack: (() -> Unit)? = null) {
     val spec = LocalMdTheme.current
     val c = spec.colors
     val recents = vm.recents.items
@@ -53,7 +55,7 @@ fun HomeScreen(vm: AppViewModel, onOpenSettings: () -> Unit) {
 
     val openLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
-    ) { uri -> if (uri != null) vm.open(uri) }
+    ) { uri -> if (uri != null) vm.openExternal(uri) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -73,7 +75,16 @@ fun HomeScreen(vm: AppViewModel, onOpenSettings: () -> Unit) {
                     .padding(top = 12.dp, bottom = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                AppMark(spec)
+                if (onBack != null) {
+                    IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
+                        Icon(
+                            imageVector = ShijianIcons.Back,
+                            contentDescription = "返回笔记库",
+                            tint = c.onSurfaceVariant,
+                        )
+                    }
+                }
+                AppMark(size = 46.dp)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
@@ -208,34 +219,6 @@ fun HomeScreen(vm: AppViewModel, onOpenSettings: () -> Unit) {
                     color = c.muted,
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun AppMark(spec: ThemeSpec) {
-    val c = spec.colors
-    Box(
-        modifier = Modifier
-            .size(46.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(c.primary),
-        contentAlignment = Alignment.Center,
-    ) {
-        // 与应用图标同一套图形：短标题条 + 三行正文
-        Column(verticalArrangement = Arrangement.spacedBy(2.5.dp)) {
-            Box(
-                Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .width(12.dp)
-                    .height(3.dp)
-                    .clip(RoundedCornerShape(1.5.dp))
-                    .background(c.onPrimary)
-            )
-            Spacer(Modifier.height(1.dp))
-            Box(Modifier.width(20.dp).height(3.dp).clip(RoundedCornerShape(1.5.dp)).background(c.onPrimary))
-            Box(Modifier.width(20.dp).height(3.dp).clip(RoundedCornerShape(1.5.dp)).background(c.onPrimary))
-            Box(Modifier.width(13.dp).height(3.dp).clip(RoundedCornerShape(1.5.dp)).background(c.onPrimary))
         }
     }
 }
